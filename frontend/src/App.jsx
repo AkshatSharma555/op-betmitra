@@ -17,20 +17,20 @@ function App() {
     netProfitLoss: 0
   });
   const [loading, setLoading] = useState(true);
-  
+
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchAllData = async () => {
     try {
-      const statsRes = await axios.get('http://localhost:5000/api/matches/analytics');
+      const statsRes = await axios.get('https://op-betmitra.onrender.com/api/matches/analytics');
       if (statsRes.data.success) {
         setStats(statsRes.data.data.overview);
         setLeaderboard(statsRes.data.data.leaderboard);
       }
 
-      const matchesRes = await axios.get('http://localhost:5000/api/matches/all');
+      const matchesRes = await axios.get('https://op-betmitra.onrender.com/api/matches/all');
       if (matchesRes.data.success) {
         setMatches(matchesRes.data.data);
       }
@@ -53,11 +53,11 @@ function App() {
   return (
     <div className="min-h-screen bg-[#F5F7FA] font-sans relative">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-[#0B2344]">Dashboard Analytics</h1>
-          <button 
+          <button
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-[#38BDF8] text-[#0B2344] px-5 py-2.5 rounded-lg font-bold shadow-md hover:bg-sky-300 transition-colors flex items-center gap-2"
           >
@@ -75,10 +75,10 @@ function App() {
               <StatCard title="Total Matches" value={stats.totalMatches} />
               <StatCard title="Total Invested" value={stats.totalInvestment} isCurrency={true} />
               <StatCard title="Total Return" value={stats.totalReturn} isCurrency={true} />
-              <StatCard 
-                title="Net Profit / Loss" 
-                value={stats.netProfitLoss} 
-                isCurrency={true} 
+              <StatCard
+                title="Net Profit / Loss"
+                value={stats.netProfitLoss}
+                isCurrency={true}
                 colorClass={stats.netProfitLoss >= 0 ? "text-green-600" : "text-red-600"}
               />
             </div>
@@ -92,10 +92,10 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {matches.length > 0 ? (
                     matches.map((match) => (
-                      <MatchCard 
-                        key={match._id} 
-                        matchData={match} 
-                        onClick={() => handleCardClick(match)} 
+                      <MatchCard
+                        key={match._id}
+                        matchData={match}
+                        onClick={() => handleCardClick(match)}
                       />
                     ))
                   ) : (
@@ -116,17 +116,17 @@ function App() {
 
       {/* Modals */}
       {isDetailsModalOpen && (
-        <MatchDetailsModal 
-          match={selectedMatch} 
-          onClose={() => setIsDetailsModalOpen(false)} 
-          onRefresh={fetchAllData} 
+        <MatchDetailsModal
+          match={selectedMatch}
+          onClose={() => setIsDetailsModalOpen(false)}
+          onRefresh={fetchAllData}
         />
       )}
 
       {isCreateModalOpen && (
-        <CreateMatchModal 
-          onClose={() => setIsCreateModalOpen(false)} 
-          onRefresh={fetchAllData} 
+        <CreateMatchModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onRefresh={fetchAllData}
         />
       )}
     </div>
