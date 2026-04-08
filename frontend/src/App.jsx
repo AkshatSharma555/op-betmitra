@@ -6,6 +6,11 @@ import StatCard from './components/StatCard';
 import Leaderboard from './components/Leaderboard';
 import MatchDetailsModal from './components/MatchDetailsModal';
 import CreateMatchModal from './components/CreateMatchModal';
+import { API_URL } from './config'; 
+
+// --- WALLET CONSTANTS ---
+const INITIAL_DEPOSIT = 300;
+const TOTAL_PLAYERS = 5;
 
 function App() {
   const [matches, setMatches] = useState([]);
@@ -17,20 +22,20 @@ function App() {
     netProfitLoss: 0
   });
   const [loading, setLoading] = useState(true);
-
+  
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchAllData = async () => {
     try {
-      const statsRes = await axios.get('https://op-betmitra.onrender.com/api/matches/analytics');
+      const statsRes = await axios.get(`${API_URL}/api/matches/analytics`);
       if (statsRes.data.success) {
         setStats(statsRes.data.data.overview);
         setLeaderboard(statsRes.data.data.leaderboard);
       }
 
-      const matchesRes = await axios.get('https://op-betmitra.onrender.com/api/matches/all');
+      const matchesRes = await axios.get(`${API_URL}/api/matches/all`);
       if (matchesRes.data.success) {
         setMatches(matchesRes.data.data);
       }
@@ -50,18 +55,23 @@ function App() {
     setIsDetailsModalOpen(true);
   };
 
+  // --- EXACT MATH CALCULATIONS ---
+  const totalNetProfit = Math.round(stats.netProfitLoss);
+  const currentWalletBalance = INITIAL_DEPOSIT + totalNetProfit;
+  const perPersonShare = Math.round(currentWalletBalance / TOTAL_PLAYERS);
+
   return (
     <div className="min-h-screen bg-[#F5F7FA] font-sans relative">
       <Navbar />
-
+      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#0B2344]">Dashboard Analytics</h1>
-          <button
+          <h1 className="text-xl md:text-2xl font-bold text-[#0B2344]">Dashboard Analytics</h1>
+          <button 
             onClick={() => setIsCreateModalOpen(true)}
-            className="bg-[#38BDF8] text-[#0B2344] px-5 py-2.5 rounded-lg font-bold shadow-md hover:bg-sky-300 transition-colors flex items-center gap-2"
+            className="bg-[#38BDF8] text-[#0B2344] px-4 py-2 md:px-5 md:py-2.5 rounded-lg font-bold shadow-md hover:bg-sky-300 transition-colors flex items-center gap-2 text-sm md:text-base"
           >
-            <span className="text-xl leading-none">+</span> New Match
+            <span className="text-lg md:text-xl leading-none">+</span> New Match
           </button>
         </div>
 
@@ -71,31 +81,39 @@ function App() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+              <StatCard title="Wallet Balance" value={currentWalletBalance} isCurrency={true} />
+              <StatCard 
+                title="Net Profit" 
+                value={totalNetProfit} 
+                isCurrency={true} 
+                colorClass={totalNetProfit >= 0 ? "text-green-600" : "text-red-600"}
+              />
               <StatCard title="Total Matches" value={stats.totalMatches} />
-              <StatCard title="Total Invested" value={stats.totalInvestment} isCurrency={true} />
-              <StatCard title="Total Return" value={stats.totalReturn} isCurrency={true} />
-              <StatCard
-                title="Net Profit / Loss"
-                value={stats.netProfitLoss}
-                isCurrency={true}
-                colorClass={stats.netProfitLoss >= 0 ? "text-green-600" : "text-red-600"}
+              <StatCard 
+                title="Per Person Share" 
+                value={perPersonShare} 
+                isCurrency={true} 
+                colorClass="text-[#38BDF8]"
               />
             </div>
 
+            {/* Smart Flex Layout: Uses order classes for responsive placement */}
             <div className="flex flex-col lg:flex-row gap-6">
-              <div className="w-full lg:w-2/3">
+              
+              {/* Matches - order-2 (Bottom on Mobile) | lg:order-1 (Left on PC) */}
+              <div className="w-full lg:w-2/3 order-2 lg:order-1">
                 <div className="mb-4 border-b border-gray-200 pb-2">
-                  <h2 className="text-xl font-bold text-[#143866]">Recent Matches</h2>
+                  <h2 className="text-lg md:text-xl font-bold text-[#143866]">Recent Matches</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {matches.length > 0 ? (
                     matches.map((match) => (
-                      <MatchCard
-                        key={match._id}
-                        matchData={match}
-                        onClick={() => handleCardClick(match)}
+                      <MatchCard 
+                        key={match._id} 
+                        matchData={match} 
+                        onClick={() => handleCardClick(match)} 
                       />
                     ))
                   ) : (
@@ -106,9 +124,11 @@ function App() {
                 </div>
               </div>
 
-              <div className="w-full lg:w-1/3">
+              {/* Leaderboard - order-1 (Top on Mobile) | lg:order-2 (Right on PC) */}
+              <div className="w-full lg:w-1/3 order-1 lg:order-2 mb-2 lg:mb-0">
                 <Leaderboard leaderboardData={leaderboard} />
               </div>
+
             </div>
           </>
         )}
@@ -116,17 +136,17 @@ function App() {
 
       {/* Modals */}
       {isDetailsModalOpen && (
-        <MatchDetailsModal
-          match={selectedMatch}
-          onClose={() => setIsDetailsModalOpen(false)}
-          onRefresh={fetchAllData}
+        <MatchDetailsModal 
+          match={selectedMatch} 
+          onClose={() => setIsDetailsModalOpen(false)} 
+          onRefresh={fetchAllData} 
         />
       )}
 
       {isCreateModalOpen && (
-        <CreateMatchModal
-          onClose={() => setIsCreateModalOpen(false)}
-          onRefresh={fetchAllData}
+        <CreateMatchModal 
+          onClose={() => setIsCreateModalOpen(false)} 
+          onRefresh={fetchAllData} 
         />
       )}
     </div>
